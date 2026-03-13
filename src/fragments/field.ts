@@ -124,8 +124,14 @@ export function getFieldsToJSONEncodable(
             return;
         }
         if (field.type.kind == 'definedTypeLinkNode') {
-            const toCastStr = renderString('{{name}}.to_encodable()', { name: 'self.' + field.name });
-            fragments.push(`"${field.name}": ${toCastStr}`);
+            const fieldtype = visit(field.type, typeManifestVisitor);
+            if (fieldtype.isEncodable) {
+                const toCastStr = renderString('{{name}}.to_encodable()', { name: 'self.' + field.name });
+                fragments.push(`"${field.name}": ${toCastStr}`);
+            } else {
+                const toCastStr = renderString(fieldtype.toEncode.render, { name: 'self.' + field.name });
+                fragments.push(`"${field.name}": ${toCastStr}`);
+            }
         } else {
             const fieldtype = visit(field.type, typeManifestVisitor);
             const JSONEncodeableStr = renderString(fieldtype.toEncode.render, {
